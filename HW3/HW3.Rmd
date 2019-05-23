@@ -1,0 +1,333 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+set.seed(1122)
+setwd("F:/Spring 18/DM/HW3")
+
+options("digits"=3)
+
+library(cluster)
+library(factoextra)
+
+```
+# 2.1
+# (a) Data Cleanup
+
+# (iii)
+```{r}
+trans <- read.csv(file = "file19.txt",comment.char = "#",sep = "", header= T)
+write.csv(trans, file = 'Mammals.csv' )
+cleaned.trans <- read.csv("Mammals.csv",comment.char="#")
+
+```
+# 2.1 (a) i
+```{r}
+cleaned.trans<-cleaned.trans[,-1]
+```
+# 2.1 (a) ii
+```{r}
+cat("There is no need to perform Standardization.")
+
+```
+
+# 2.1 (b) i
+```{r}
+cat("After 7th cluster, the slop is constant, hence number of clusters are 7")
+fviz_nbclust(cleaned.trans[2:9], kmeans, method="wss") 
+```
+
+# 2.1 (b) ii
+```{r}
+k <- kmeans(cleaned.trans[2:9], centers=7, nstart=25)
+fviz_cluster(k, cleaned.trans[2:9])
+```
+
+# 2.1 (b) iii 
+```{r}
+k$size
+
+cat("There are 19 observations in 1st cluster.")
+cat("There are 2 observations in 2nd cluster.")
+cat("There are 10 observations in 3rd cluster.")
+cat("There are 17 observations in 4th cluster.")
+cat("There are 8 observations in 5th cluster.")
+cat("There are 9 observations in 6th cluster.")
+cat("There are 1 observations in 7th cluster.")
+
+
+```
+
+# 2.1 (b) iv
+```{r}
+k$tot.withinss
+cat("Total SSE of the cluster is 76.2")
+```
+
+# 2.1 (b) v
+```{r}
+k$withinss
+cat("SSE of 1st cluster is 23.47.")
+cat(" SSE of 2nd cluster is 3.00.")
+cat(" SSE of 3rd cluster is 21.10.")
+cat(" SSE of 4th cluster is 20.71.")
+cat(" SSE of 5th cluster is 6.38.")
+cat(" SSE of 6th cluster is 1.56.")
+cat(" SSE of 7th cluster is 0.00.")
+
+```
+
+# 2.1 (b) vi
+```{r}
+
+which(k$cluster ==1)
+
+which(k$cluster ==2)
+
+which(k$cluster ==3)
+
+which(k$cluster ==4)
+
+which(k$cluster ==5)
+
+which(k$cluster ==6)
+
+which(k$cluster ==7)
+cat("Mammals are grouped in each cluster as per given data, hence they are correct. ")
+```
+
+# 2.2
+```{r}
+country <- read.csv(file = "file46.txt", comment.char = "#", sep = "", header = T, row.names = 1)
+
+```
+
+# 2.2 (a)
+```{r}
+library(eclust)
+#cleaned.trans2<-cleaned.trans2[,-1]
+
+hc.single <- eclust(country, "hclust", k = 3, hc_method="single")
+fviz_dend(hc.single, show_labels=TRUE, palette="jco", as.ggplot=T)
+
+```
+
+```{r}
+hc.complete <- eclust(country, "hclust", k = 3, hc_method="complete")
+fviz_dend(hc.complete, show_labels=TRUE, palette="jco", as.ggplot=T)
+```
+```{r}
+hc.average <- eclust(country, "hclust", k = 3, hc_method="average")
+fviz_dend(hc.average, show_labels=TRUE, palette="jco", as.ggplot=T)
+```
+# 2.2 (b)
+```{r}
+cat("For single method, two-singleton clusters are {Denmark, Norway}, {France, Belgium},{Luxemburg, Switzerland},
+    {West Gernamy, Austria} and {Great Britan, Ireland}")
+
+cat("For complete method, two-singleton clusters are {Denmark, Norway}, {France, Belgium},{Luxebburg, Switzerland},
+    {West Gernamy, Austria} and {Great Britan, Ireland}")
+
+cat("For average method, two-singleton clusters are {Denmark, Norway}, {France, Belgium},{Luxebburg, Switzerland},
+    {West Gernamy, Austria} and {Great Britan, Ireland}, {Portugal, Spain}")
+
+```
+
+# 2.2 (c)
+```{r}
+cat(" According to raw data, Italy is quite similar to France and hence is clustered to it. Complete cluster accurately reflects how Italy should be clustered as complete link can break large clusters.")
+
+```
+#2.2 (d)
+```{r}
+cat(" Purity is the linkage strategy that produces the most two-singleton clusters. Therefore average Linkage
+would be purest as it produces 6 two-singleton clusters")
+```
+
+# 2.2 (e)
+```{r}
+cut.avg <- cutree(hc.average, h = 125)
+table(cut.avg)
+cat("Cut at Height = 125, we get 7 Clusters")
+```
+#2.2 (f)
+```{r}
+hc.single <- eclust(country, "hclust", k = 7, hc_method="single")
+fviz_dend(hc.single, show_labels=TRUE, palette="jco", as.ggplot=T)
+
+```
+
+```{r}
+hc.complete <- eclust(country, "hclust", k = 7, hc_method="complete")
+fviz_dend(hc.complete, show_labels=TRUE, palette="jco", as.ggplot=T)
+
+```
+
+```{r}
+hc.average <- eclust(country, "hclust", k = 7, hc_method="average")
+fviz_dend(hc.average, show_labels=TRUE, palette="jco", as.ggplot=T)
+
+
+```
+
+#2.2 (g)
+```{r}
+library(fpc)
+single <- cluster.stats(dist(country), hc.single$cluster)
+single$dunn
+single$avg.silwidth
+
+complete <- cluster.stats(dist(country), hc.complete$cluster)
+complete$dunn
+complete$avg.silwidth
+
+average <- cluster.stats(dist(country), hc.average$cluster)
+average$dunn
+average$avg.silwidth
+
+```
+# 2.2 (h)
+```{r}
+cat("Average linkage cluster is best cluster obtained based on Dunn index as it is highest as compare to others.")
+```
+
+#2.2 (i)
+```{r}
+cat("Complete linkage cluster is best cluster obtained based on Silhoutte width as it is highest as compare to others.")
+
+```
+
+# 2.3
+```{r}
+HTRU <- read.csv("HTRU_2-small.csv",comment.char="#")
+
+```
+
+# 2.3 (a)
+```{r}
+pca <- prcomp(scale(HTRU))
+names(pca)
+summary(pca)
+
+```
+#2.3 (a) i
+```{r}
+pca$sdev
+summary(pca)
+cat("cumulative variance is explained by the first two components is 77%")
+```
+# 2.3 (a) ii
+```{r}
+var <- pca$x[,1:2]
+
+plot(var[,1],var[,2], col=c("red","orange"),pch=20)
+
+
+```
+```{r}
+biplot(pca, col = c("red", "black"),scale=0)
+
+```
+
+#2.3 (a) iii
+```{r}
+cat("In the plot, mean and standard deviation are close to each other as their values in given dataset are somewhat simmilar, std.dev.dm.snr and mean.dm.snr are close to each other as their values in given dataset are somewhat simmilar, class and skewness are nearly simmilar, hence they are close to each other in plot.")
+```
+#2.3 (b) i
+```{r}
+km <- kmeans(HTRU, centers=2)
+fviz_cluster(km, data=HTRU)
+
+```
+
+# 2.3 (b) ii
+```{r}
+cat("Shape of cluster in b(i) and a(ii) is somewhat similar to each other because both are running on same original data. Hence there are chances of having somewhat similar shape")
+```
+
+# 2.3 (b) iii
+```{r}
+km$size
+cat("distribution of the observations in 1st cluster is 1510 and in 2nd cluster it is 8490.")
+```
+
+# 2.3 (b) iv
+```{r}
+table(HTRU$class)
+cat("distribution of the classes in the HTRU2 dataset is 9041 for class 0 and 959 for class 1")
+```
+
+#2.3 (b) v
+```{r}
+cat("cluster 1 belongs to minority class and cluster 2 belongs to the majority class")
+```
+
+# 2.3 (b) vi
+```{r}
+#k$size[2]
+indices <- which(km$cluster == 2)
+xyz <- HTRU[indices,]
+
+class1 <- data.frame(which(xyz$class == 1))
+class0 <- data.frame(which(xyz$class == 0))
+
+nrow(class1)
+nrow(class0)
+cat("observations in this large cluster belong to
+class 1 are 943 and observations belong to class 0 are 7547 ")
+```
+
+# 2.3 (b) vii
+```{r}
+cat("Larger cluster represents class 0")
+```
+
+# 2.3(b) viii
+```{r}
+y <- km$betweenss / km$totss
+y
+km
+cat("Variance of cluster is 49.4 %")
+```
+
+# 2.3 (b) ix
+```{r}
+sil <- cluster.stats(dist(HTRU), km$cluster)
+sil$avg.silwidth
+cat("Average silhouette width of both the cluster is 0.588")
+```
+# 2.3(b) x
+```{r}
+sil$clus.avg.silwidths
+cat("Silhouette width of cluster 1 is 0.415 and for cluster 2 is 0.619. Silhouette width of cluster 2 is large hence cluster 2 is good")
+```
+# 2.3 (c) 
+```{r}
+kPCA <- kmeans(pca$x[,1:2], centers=2)
+```
+
+# 2.3 (c) i
+```{r}
+fviz_cluster(kPCA, data=pca$x[,1:2])
+
+```
+
+# 2.3 (c) ii
+```{r}
+sil1 <- cluster.stats(dist(pca$x[,1:2]), kPCA$cluster)
+sil1$avg.silwidth
+cat("Average silhouette width of both the cluster is 0.701")
+
+```
+# 2.3 (c) iii
+```{r}
+sil1$clus.avg.silwidths
+cat("Silhouette width of cluster 1 is 0.720 and for cluster 2 is 0.475. Silhouette width of cluster 1 is large hence cluster 1 is good")
+
+```
+# 2.3 (c) iv
+```{r}
+cat("Average silhouette width of both the cluster is 0.701 [c(ii)] and Average silhouette width of both the cluster is 0.588 [b(ix)]")
+cat("Cluster 1 is good in c(iii) and cluster 2 is good in b(x) ")
+```

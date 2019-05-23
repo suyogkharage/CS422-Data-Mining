@@ -1,0 +1,193 @@
+---
+title: "CS 422 Section 02"
+output: html_notebook
+Author: Me Student
+---
+# Practicum problems
+# Problem 1
+
+```{r}
+
+setwd("F:/Spring 18/DM/HW1")
+
+#read the College.cvs file
+college <- read.csv("College.csv")
+
+# adding column name "row.names" to university information
+rownames(college) <- college[,1]
+fix(college)
+
+colleger <- college[,-1]
+fix(college)
+
+```
+
+```{r}
+# summary of variables dataset
+summary(college)
+```
+
+# Scatterplot matrix and boxplot() function
+```{r}
+# pairs() function to produce a scatterplot matrix of the first ten columns or variables of the data
+pairs(college[,1:10])
+
+# boxplot() function to produce side-by-side boxplots
+boxplot(college$perc.alumni~college$Private,data=college,main="Boxplot",xlab="Alumni",ylab="Private Student")
+```
+
+```{r}
+boxplot(college$PhD~college$Private,data=college,main="Boxplot",xlab="PhD Student",ylab="Private Student")
+```
+
+```{r}
+
+# creation of new variable Elite and dividation universities into two groups based on whether or not the proportion of #students coming from the top 10 % of their high school classes exceeds 50 %
+
+Elite <- rep("No", nrow(college))
+Elite[college$Top10perc > 50] <- "Yes"
+Elite <- as.factor(Elite)
+college <- data.frame(college, Elite)
+
+# summary of Elite universities
+summary(Elite)
+
+```
+
+
+```{r}
+# histograms of different variables
+
+# divide the print window into four regions
+par(mfrow=c(2,2))
+
+# histogram for PhD students
+hist(college$PhD, col="red", main="Histogram on PhD", xlab="Number of PhD students", ylab="Number of Universities")
+
+# histogram for Graduate Students
+hist(college$Grad.Rate, col="green", main="Histogram on Graduation Rate", xlab="Graduation Rate", ylab="Number of Universities")
+
+# histogram for Books
+hist(college$Books, col="yellow", main="Histogram on Books", xlab="Number of Books", ylab="Number of Universities")
+
+# histogram for Out od State Tuition
+hist(college$Outstate, col="blue", main="Histogram on Out of state tuition", xlab="Out of State tuition", ylab="Number of Universities")
+
+```
+
+```{r}
+cat("From histograms, boxplots and other Summary, we can say that this dataset is well fitted.")
+
+```
+
+# problem2 : Linear regresssion
+```{r}
+
+nba <- read.csv("nba.csv")
+
+nba1 <- nba[c(8,23)]
+
+print(nba1$MIN)
+
+
+#calcualated the correlation coefficient
+cor(nba1)
+
+cor.plot(nba1)
+```
+
+# Simple regression on PTS
+```{r}
+model = lm(PTS~MIN, data=nba1)
+summary(model)
+
+plot(nba1$MIN,nba1$PTS, main="Plot for predictor and regressor", xlab="MIN",ylab="PTS") 
+abline(lm(nba$PTS~nba1$MIN), col="red")
+
+```
+
+# Creation of training and test subsets
+```{r}
+set.seed(1122)
+index <- sample(1:nrow(nba),250)
+train <- nba[index, ]
+test <- nba[-index, ]
+```
+
+# Subset of multiple attributes
+```{r}
+nba2 <- nba[c(9,10,11,15,17,23)]
+head(nba2)
+
+cor(nba2)
+
+cat("From correlation efficients of the above attributes of subset nba2, we can say that attributes like FG, FGA and X3P are best fitted. Hence we will go with following attributes as regressors: FG, FGA, X3P. Now we will create multiple regression model of selected attributes with response variable PTS") 
+```
+
+# New subset creation with regressors only
+```{r}
+
+nba3 <- nba[c(9,10,11,23)]
+
+```
+
+
+#Plot the corrrelation between response variable and regressors
+```{r}
+s <- cor(nba3)
+cor.plot(s)
+#cor.plot(nba2$FG,nba2$FGA,nba2$X3P, main="Plot for predictor and regressor", xlab="MIN",ylab="PTS")
+
+
+# multiple regression
+regressor_model = lm(PTS~FG+FGA+X3P, data = nba3)
+summary(regressor_model)
+
+cat("If we look at the summary of model of response variable with regressors, R-squared values of all regressors are close to 1.(i.e. Multiple R-squared: 0.932 and Adjusted R-squared: 0.9312). Hence this model fits perfectly.")
+
+#--------------------------------------------
+```
+# plot the residuals
+```{r}
+plot(regressor_model, 1)
+cat("Looks reasonably good as residuals appear homosceadastic and clustered around 0.")
+
+```
+
+# plot histograms of residuals
+```{r}
+hist(regressor_model$residuals, main="Histogram of Residuals", xlab="Residuals", ylab="Frequency", col="Green")
+
+cat("This Histogram follows Gaussian Distribution")
+```
+# use of predict method
+```{r}
+index <- which.max(nba$PTS)
+nba[index,]
+```
+
+# Put the test response variable as the second column vector in the new dataframe
+```{r}
+predict_df <- data.frame(predict.lm(regressor_model, test, interval="prediction"))
+new_df <- data.frame(cbind(predict_df$fit, test$PTS))
+new_df <- round(new_df)
+
+cat("From this new_df data frame, we obtained 6 exact match values")
+
+```
+
+# Problem 2: (h)
+```{r}
+n <- nrow(test)
+p <- 3 #Number of coefficients which is 4 in this case
+TSS <- sum(( new_df$X1 - mean(new_df$X1))^2)
+TSS
+RSS <- sum((new_df$X1 - test$PTS)^2)
+RSS
+RSE <- sqrt((1/(n - p - 1) * RSS)) 
+RSE
+
+F_STAT <- ((TSS - RSS) / p) / (RSS / (n-p-1))
+F_STAT
+
+```

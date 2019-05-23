@@ -1,0 +1,428 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+set.seed(1122)
+setwd("F:/Spring 18/DM/HW2")
+
+options("digits"=3)
+
+adultTest <- read.csv("adult-test.csv")
+
+adultTrain <- read.csv("adult-train.csv")
+
+```
+
+# 2.1 - a
+```{r}
+# data cleaning of test data set
+sum(adultTest$age == '?')
+
+sum(adultTest$workclass == '?')
+at <- which(adultTest$workclass == '?')
+adultTest <- adultTest[-c(at), ]
+
+sum(adultTest$fnlwgt == '?')
+
+sum(adultTest$education == '?')
+
+sum(adultTest$education_num == '?')
+
+sum(adultTest$marital_status == '?')
+
+sum(adultTest$occupation == '?')
+at <- which(adultTest$occupation == '?')
+adultTest <- adultTest[-c(at), ]
+
+sum(adultTest$relationship == '?')
+
+sum(adultTest$race == '?')
+
+sum(adultTest$sex == '?')
+
+sum(adultTest$capital_gain == '?')
+
+sum(adultTest$capital_loss == '?')
+
+sum(adultTest$hours_per_week == '?')
+
+sum(adultTest$native_country == '?')
+at <- which(adultTest$native_country == '?')
+adultTest <- adultTest[-c(at), ]
+
+sum(adultTest$income == '?')
+
+# data cleaning of train data set
+sum(adultTrain$age == '?')
+
+sum(adultTrain$workclass == '?')
+at <- which(adultTrain$workclass == '?')
+adultTrain <- adultTrain[-c(at), ]
+
+sum(adultTrain$fnlwgt == '?')
+
+sum(adultTrain$education == '?')
+
+sum(adultTrain$education_num == '?')
+
+sum(adultTrain$marital_status == '?')
+
+sum(adultTrain$occupation == '?')
+at <- which(adultTrain$occupation == '?')
+adultTrain <- adultTrain[-c(at), ]
+
+sum(adultTrain$relationship == '?')
+
+sum(adultTrain$race == '?')
+
+sum(adultTrain$sex == '?')
+
+sum(adultTrain$capital_gain == '?')
+
+sum(adultTrain$capital_loss == '?')
+
+sum(adultTrain$hours_per_week == '?')
+
+sum(adultTrain$native_country == '?')
+at <- which(adultTrain$native_country == '?')
+adultTrain <- adultTrain[-c(at), ]
+
+sum(adultTrain$income == '?')
+
+```
+
+# 2.1 - b
+```{r}
+
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+
+mytree <- rpart(income ~ ., data = adultTrain, method = "class")
+```
+
+<a id="plot_initial_tree"></a>
+```{r plot_initial_tree}
+rpart.plot(mytree, extra=104, fallen.leaves = T, type=4, main="Rpart on adultTrain data (Full Tree)")
+
+#fancyRpartPlot(mytree)
+```
+
+```{r}
+summary(mytree)
+```
+# 2.1 - b - i
+```{r}
+cat("The top three important predictors - relationship, marital_status and capital_gain")
+```
+
+# 2.1 - b - ii
+```{r}
+cat("First split done on - relationship.
+    Predictde class of first node - <=50k
+    Distributions of observation - 75% for <=50K class and 25% for >50K class")
+```
+
+# 2.1 - c
+```{r}
+pred <- predict(mytree, adultTest, type="class")
+head(pred)
+```
+
+```{r}
+head(adultTest$income)
+```
+
+<a id="confusion_matrix_full_tree"></a>
+```{r}
+library(caret)
+confusionMatrix(pred, adultTest[, 15])
+```
+# 2.1 - c - i
+```{r}
+cat("Balanced Accuracy - 0.726")
+
+```
+#2.1 - c - ii
+```{r}
+cat("Balanced error rate of model - 0.274 ")
+```
+# 2.1 - c - iii
+```{r}
+cat("Sensitivity includes all actual positive obeservations in the test set(adultTest). Here, Sensitivity is 0.948.
+     Specificity includes all actual negative obeservations in the test set(adultTest). Here, Specificity is 0.504")
+```
+# 2.1 - c - iv
+<a id="pred_chunk"></a>
+```{r pred_chunk}
+# ROC curve
+pred.rocr <- predict(mytree, newdata=adultTest, type="prob")[,2]
+f.pred <- prediction(pred.rocr, adultTest$income)
+f.perf <- performance(f.pred, "tpr", "fpr")
+plot(f.perf, colorize=T, lwd=3)
+abline(0,1)
+auc <- performance(f.pred, measure = "auc")
+cat(paste("The area under curve (AUC) for this model is ", round(auc@y.values[[1]], 3)))
+
+```
+# 2.1 - d
+```{r}
+options("digits"=5)
+printcp(mytree)
+options("digits"=3)
+
+
+```
+
+```{r}
+cat("From the complexity table, we can see xerror value is decreasing from 1st row to 4th row. There is no any increment in the xerror value after 4th row. Hence we can say that, there is no need of pruning the tree. We would have pruned the tree if any increment in xerror value had present after 4th row.")
+
+```
+
+# 2.1 - e - i
+```{r}
+cat(paste("Count of observations in the class <=50K is",sum(adultTrain$income == '<=50K')))
+cat(paste("Count of observations in the class >50K is",sum(adultTrain$income == '>50K')))
+
+```
+# 2.1 - e - ii
+```{r}
+library(ROSE)
+#sample_adult_train <- ovun.sample(income~., data = adultTrain, method = "under", N = 15016, seed=1)$data
+
+minor_df <- adultTrain[adultTrain$income == ">50K", ]
+major_df <- adultTrain[adultTrain$income == "<=50K", ]
+nrow(major_df)
+nrow(minor_df)
+major_df <- major_df[sample(nrow(major_df), nrow(minor_df)), ]
+nrow(major_df)
+training_no <- rbind(major_df, minor_df)
+table(training_no$income)
+
+
+#sampleframe <-  sample.rows(subset(adultTrain, income == ">=50K"), 7508)
+```
+# 2.1 - e - iii
+```{r}
+sample_model <- rpart(income ~ ., method="class", data=training_no)
+
+pred1 <- predict(sample_model, adultTest, type="class")
+head(pred1)
+```
+
+```{r}
+head(adultTest$income)
+```
+
+<a id="confusion_matrix_full_tree"></a>
+```{r}
+confusionMatrix(pred1, adultTest[, 15])
+
+```
+
+# 2.1- e - iii - i
+```{r}
+cat("Balanced Accuracy - 0.804")
+
+```
+#2.1 - e - iii - ii
+```{r}
+cat("Balanced error rate of model - 0.196 ")
+```
+# 2.1 - e - iii - iii
+```{r}
+cat("Sensitivity includes all actual positive obeservations in the test set(adultTest). Here, Sensitivity is 0.773.
+     Specificity includes all actual negative obeservations in the test set(adultTest). Here, Specificity is 0.834")
+```
+# 2.1 - e - iii - iv
+<a id="pred1_chunk"></a>
+```{r pred1_chunk}
+# ROC curve
+pred1.rocr <- predict(mysampletree, newdata=adultTest, type="prob")[,2]
+f.pred <- prediction(pred1.rocr, adultTest$income)
+f.perf <- performance(f.pred, "tpr", "fpr")
+plot(f.perf, colorize=T, lwd=3)
+abline(0,1)
+auc <- performance(f.pred, measure = "auc")
+cat(paste("The area under curve (AUC) for this model is ", round(auc@y.values[[1]], 3)))
+```
+
+# 2.1 - f
+```{r}
+cat(" If we see differences in the balanced accuracy, sensitivity, specificity and AUC of the models used in (c) and (e), every value is incresing excpet sensitivity. Hence overall we can say that model created in (e) is better than that of (c)  ")
+
+```
+
+#2.2
+```{r}
+set.seed(1122)
+```
+# 2.2 - a
+```{r}
+library(randomForest)
+RF <- randomForest(income ~ ., data=adultTrain, importance=TRUE)
+
+pred2 <- predict(RF, adultTest, type="class")
+head(pred2)
+
+```
+
+```{r}
+head(adultTest$income)
+
+```
+
+```{r}
+confusionMatrix(pred2, adultTest[, 15])
+
+```
+# 2.2 - a -i
+```{r}
+cat("Balanced Accuracy - 0.632")
+```
+# 2.2 - a - ii
+```{r}
+cat("Accuracy - 0.818")
+```
+# 2.2 - a - iii
+```{r}
+cat("Sensitivity - 0.997")
+cat("Specificity - 0.267")
+```
+# 2.2 - a - iv
+```{r}
+cat(paste("Count of observations in the class <=50K is",sum(adultTest$income == '<=50K')))
+cat(paste("Count of observations in the class >50K is",sum(adultTest$income == '>50K')))
+```
+# 2.2 - a - v
+```{r}
+cat("In the given dataset, there are more number of observations of class <=50 with more sensitivity and less number of observations of class >50K with less specificity. Hence, given the response class distribution, sensitivity and specificity makes sense. ")
+```
+# 2.2 - a - vi
+```{r}
+varImpPlot(RF)
+cat("MeanDecreaseAccuracy is the measurement of the suitability of the variable as predictor. Hence, for MeanDecreseAccuracy, capital gain is most importatnt variable and native_country is least important variable.
+    MeanDecreaseGini is based on the gini impurity which also means the lower the gini impurity, then the higher the purity of the variable. Hence, for MeanDecreaseGini, relationship is the most important varibale and race is the least important variable.")
+```
+# 2.2 - a - vii
+```{r}
+print(RF)
+cat("Number of variables tried at each split is 3")
+```
+# 2.2 - b
+```{r}
+mtry <- tuneRF(adultTrain[,-15], adultTrain[,15], ntreeTry=500,stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE)
+print(mtry)
+
+```
+# 2.2 - b - i
+```{r}
+cat("Default value of mtry is 3.")
+```
+#2.2 - b - ii
+```{r}
+print(mtry)
+cat("Optimal value of mtry is 2 since OOBError value is less for this value. ")
+```
+
+# 2.2 - b - iii
+```{r}
+RFTune <- randomForest(income ~ ., data=adultTrain, mtry=2, importance=TRUE)
+
+pred3 <- predict(RFTune, adultTest, type="class")
+head(pred3)
+
+```
+
+```{r}
+head(adultTest$income)
+```
+
+```{r}
+confusionMatrix(pred3, adultTest[, 15])
+```
+
+# 2.2 - b - iii - 1
+```{r}
+cat("Balanced accuracy is 0.646 ")
+```
+# 2.2 - b - iii - 2
+```{r}
+cat("Accuracy is 0.824")
+```
+# 2.2 - b - iii - 3
+```{r}
+cat("Sensitivity is 0.996
+    Specificity is 0.296")
+```
+# 2.2 - b - iii - 5
+```{r}
+varImpPlot(RFTune)
+cat("MeanDecreaseAccuracy is the measurement of the suitability of the variable as predictor. Hence, for MeanDecreseAccuracy, capital gain is most importatnt variable and native_country is least important variable.
+    MeanDecreaseGini is based on the gini impurity which also means the lower the gini impurity, then the higher the purity of the variable. Hence, for MeanDecreaseGini, capital_gain  is the most important varibale and race is the least important variable.")
+```
+
+# 2.2 - b - iv
+```{r}
+cat("from model created in 2.2 - a and 2.2 - b, we can say that, accuracy, Balanced accuracy,Sensitivity and specificity are increased for model created in 2.2 - b. hence model of 2.2 - b is better that that of 2.2-a. Variable importance is almost same for both models. ")
+```
+# 2.3 
+```{r}
+library(arules)
+groceries <- read.transactions("groceries.csv",sep=",")
+summary(groceries)
+```
+
+# 2.3 - i
+```{r}
+rules <- apriori(groceries)
+cat("With support value of 0.1, here we got 0 rules.")
+rm(rules)
+```
+# 2.3 - ii
+```{r}
+rules <- apriori(groceries, parameter = list(support=0.001))
+summary(rules)
+cat("With support value of 0.001, we get set of 410 rules")
+```
+#2.3 - iii
+```{r}
+
+itemfreq <- itemFrequency(groceries, type = "absolute")
+sort(itemfreq,decreasing = TRUE)
+cat("From summary, Whole milk is most frequently bought item with frequency of 2513.")
+```
+#2.3 - iv
+```{r}
+
+cat("From result of above function, baby food and sound storage medium is least frequently bought item with frequency of 1.")
+
+
+```
+# 2.3 - v
+```{r}
+top.support <- sort(rules, decreasing = T, by="support")
+inspect(head(top.support,5))
+```
+#2.3 - vi
+```{r}
+top.confidence <- sort(rules, decreasing = T, by="confidence")
+inspect(head(top.confidence, 5))
+
+```
+#2.3 - vii
+```{r}
+bottom.support <- sort(rules, decreasing = F, by="support")
+inspect(head(bottom.support, 5))
+```
+#2.3 - viii
+```{r}
+bottom.confidence <- sort(rules, decreasing = F, by="confidence")
+inspect(head(bottom.confidence, 5))
+
+
+```

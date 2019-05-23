@@ -1,0 +1,31 @@
+---
+title: "CS 422 Section 02"
+output: html_notebook
+author: Me Student
+---
+
+```{r}
+data(cars)
+cars
+View(cars)
+  plot(cars, main = "The Cars Dataset")
+summary(cars)
+ 
+cat(paste("Maximum speed is 25 and minimum distance is 2"))
+
+setwd("F:/Spring 18/DM/HW0")
+
+
+dataframe1 <- read.csv("student.csv",sep=";",header=T)
+
+dataframe1
+
+newrow <- data.frame(name="Brad Pit", id=40051, gpa=2.21, grade="C")
+
+dataframe1 <- rbind(dataframe1,newrow, stringsAsFactors=FALSE)
+
+dataframe1
+
+
+```
+
